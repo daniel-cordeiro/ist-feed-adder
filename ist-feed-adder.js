@@ -1,6 +1,6 @@
 const CDI_II_RSS = `https://cdi2tp.math.tecnico.ulisboa.pt/rss/avisos`;
 const CDI_NAME = 'Cálculo Diferencial e Integral II';
-let cdi_curricular_unit = {name: CDI_NAME, url: CDI_II_RSS.split('rss')[0], last_updated: new Date(0), announcements: []};
+let cdi_curricular_unit = {name: CDI_NAME, url: CDI_II_RSS.split('rss')[0], announcements: []};
 
 function formatDate(date) {
     var d = new Date(date),
