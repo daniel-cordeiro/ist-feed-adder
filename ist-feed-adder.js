@@ -1,22 +1,54 @@
 const FEED_CONTENT_ELEMENT = document.getElementById('main-content-wrapper');
 const newFeedInput = `
-<button type="button" style="margin-bottom:18px" class="btn btn-link" data-toggle="collapse" data-target="#newFeedInputPanel">Adicionar Feed</button>
+<button id="btnShowAddFeedPanel" type="button" style="margin-bottom:18px" class="btn btn-link" data-toggle="collapse" data-target="#newFeedInputPanel">Adicionar Feed</button>
 <div class="panel panel-default collapse" id="newFeedInputPanel">
     <div class="panel-body">
-        <div class="form-group">
-            <label for="curricular_unit_name">Nome da disciplina:</label>
-            <input type="text" class="form-control" id="curricular_unit_name">
-        </div>
-        <div class="form-group">
-            <label for="rss_url">URL do feed RSS:</label>
-            <input class="form-control" id="rss_url" type="url">
-        </div>
-        <button type="button" class="btn btn-primary">Submeter</button>
+        <form id="formNewFeed">
+            <div class="form-group">
+                <label for="curricular_unit_name">Nome da disciplina:</label>
+                <input type="text" class="form-control" id="curricular_unit_name" required>
+            </div>
+            <div class="form-group">
+                <label for="rss_url">URL do feed RSS:</label>
+                <input class="form-control" id="rss_url" type="url" required>
+            </div>
+            <button id="submitNewFeed" type="submit" class="btn btn-primary">Submeter</button>
+        </form>
     </div>
 </div>
 `;
 
 FEED_CONTENT_ELEMENT.children[0].insertAdjacentHTML("afterend", newFeedInput);
+
+
+
+function submitNewFeed(event) {
+    event.preventDefault();
+
+    const curricular_unit_name = document.getElementById('curricular_unit_name').value;
+    const rss_url = document.getElementById('rss_url').value;
+    
+    console.log(curricular_unit_name);
+    console.log(rss_url);
+
+
+    addCurricularUnit(curricular_unit_name,rss_url)
+    .then(() =>{
+        formNewFeed.reset();
+        document.getElementById('btnShowAddFeedPanel').click();
+    })
+    .catch((err) =>{
+        alert("O feed RSS que especificou não existe ou é inválido.");
+        console.log(err);
+    });  
+}
+
+
+//register submit event
+const formNewFeed = document.getElementById('formNewFeed');
+formNewFeed.addEventListener('submit', submitNewFeed);
+
+
 
 function formatDate(date) {
     var d = new Date(date),
@@ -36,35 +68,36 @@ function formatDate(date) {
 function addCurricularUnit(name, rssUrl) {
     // const CDI_II_RSS = `https://cdi2tp.math.tecnico.ulisboa.pt/rss/avisos`;
     // const CDI_NAME = 'Cálculo Diferencial e Integral II';
-    const CDI_NAME = name;
-    const CDI_II_RSS = rssUrl;
-    const cdi_curricular_unit = {name: CDI_NAME, url: CDI_II_RSS.split('rss')[0], announcements: []};
+    const CU_NAME = name;
+    const CU_RSS = rssUrl;
+    const curricular_unit = {name: CU_NAME, url: CU_RSS.split('rss')[0], announcements: []};
 
-    fetch(CDI_II_RSS)
+    return fetch(CU_RSS)
         .then(response => response.text())
         .then(str => new DOMParser().parseFromString(str, "text/xml"))
         .then(data => {
             //populate curricular object
-            cdi_curricular_unit.announcements_url = data.getElementsByTagName('link')[0].textContent;
+            curricular_unit.announcements_url = data.getElementsByTagName('link')[0].textContent;
             
             const posts = data.getElementsByTagName('item')
             for (let i = 0; i < posts.length; i++) {
                 const element = posts[i];
-                cdi_curricular_unit.announcements.push(
+                curricular_unit.announcements.push(
                     {
                         title: element.getElementsByTagName('title')[0].textContent,
                         date_published: Date.parse(element.getElementsByTagName('pubDate')[0].textContent),
-                        last_updated: Date.parse(element.getElementsByTagName('atom:updated')[0].textContent),
+                        //TODO: resolve different ways of getting this information on different feed sources
+                        last_updated: new Date(2020,3,14), //Date.parse(element.getElementsByTagName('atom:updated')[0].textContent),
                         link: element.getElementsByTagName('link')[0].textContent,
                         html_content: element.getElementsByTagName('description')[0].textContent
                     }
                 );
             }
 
-            cdi_curricular_unit.announcements.sort((a, b) => b.last_updated - a.last_updated);
-            cdi_curricular_unit.last_updated = cdi_curricular_unit.announcements[0].last_updated;
+            curricular_unit.announcements.sort((a, b) => b.last_updated - a.last_updated);
+            curricular_unit.last_updated = curricular_unit.announcements[0].last_updated;
 
-            console.log(cdi_curricular_unit);
+            console.log(curricular_unit);
         })
         .then( () => {
             //build and apply new html feed
@@ -73,17 +106,17 @@ function addCurricularUnit(name, rssUrl) {
                     <div class="panel-body clearfix">
                         <h3 class="panel-title pull-left" style="font-size:18px">
                             <strong><a id="colapseToggler" data-toggle="collapse" href="#collapseAnnouncements" aria-expanded="false" aria-controls="collapseAnnouncements">+ </a>
-                            <a href="${cdi_curricular_unit.url}">${cdi_curricular_unit.name}</a></strong>
+                            <a href="${curricular_unit.url}">${curricular_unit.name}</a></strong>
                         </h3>
                         <small class="pull-right">
                             <em>
-                                Atualizado em ${formatDate(cdi_curricular_unit.last_updated)}
+                                Atualizado em ${formatDate(curricular_unit.last_updated)}
                             </em>
                         </small>
                     </div>
 
                     <div class="collapse" id="collapseAnnouncements">
-                        ${cdi_curricular_unit.announcements.map(announcement => `
+                        ${curricular_unit.announcements.map(announcement => `
                         <div class="panel-body">
                             <div class="panel panel-default">
                                 <div class="panel-body clearfix">
@@ -103,8 +136,8 @@ function addCurricularUnit(name, rssUrl) {
                                     <p class="text-right" style="margin: 0">
                                         <small>
                                             <em>
-                                                <a href="${cdi_curricular_unit.announcements_url}" target="_blank">
-                                                    ${cdi_curricular_unit.name} - Anúncios
+                                                <a href="${curricular_unit.announcements_url}" target="_blank">
+                                                    ${curricular_unit.name} - Anúncios
                                                 </a>
                                             </em>
                                             <br>
@@ -122,7 +155,7 @@ function addCurricularUnit(name, rssUrl) {
             `;
 
             // const contentElement = document.getElementById('main-content-wrapper');
-            FEED_CONTENT_ELEMENT.children[0].insertAdjacentHTML("afterend", newFeed);
+            FEED_CONTENT_ELEMENT.children[2].insertAdjacentHTML("afterend", newFeed);
 
         })
         .then( () =>{
