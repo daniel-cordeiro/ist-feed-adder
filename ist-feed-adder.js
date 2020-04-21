@@ -104,11 +104,13 @@ function addCurricularUnit(name, rssUrl) {
         })
         .then( () => {
             //build and apply new html feed
+            const ts = Date.now();
+
             const newFeed = `
                 <div class="panel panel-default" style="border-width: thick;">
                     <div class="panel-body clearfix">
                         <h3 class="panel-title pull-left" style="font-size:18px">
-                            <strong><a id="colapseToggler" data-toggle="collapse" href="#collapseAnnouncements" aria-expanded="false" aria-controls="collapseAnnouncements">+ </a>
+                            <strong><a id="colapseToggler-${ts}" data-toggle="collapse" href="#collapseAnnouncements-${ts}">+ </a>
                             <a href="${curricular_unit.url}">${curricular_unit.name}</a></strong>
                         </h3>
                         <small class="pull-right">
@@ -118,7 +120,7 @@ function addCurricularUnit(name, rssUrl) {
                         </small>
                     </div>
 
-                    <div class="collapse" id="collapseAnnouncements">
+                    <div class="collapse" id="collapseAnnouncements-${ts}">
                         ${curricular_unit.announcements.map(announcement => `
                         <div class="panel-body">
                             <div class="panel panel-default">
@@ -159,11 +161,12 @@ function addCurricularUnit(name, rssUrl) {
             `;
 
             FEED_CONTENT_ELEMENT.children[2].insertAdjacentHTML("afterend", newFeed);
+            return ts;
 
         })
-        .then( () =>{
+        .then( ts =>{
             //register document events
-            let colapseToggler = document.getElementById('colapseToggler');
+            let colapseToggler = document.getElementById(`colapseToggler-${ts}`);
             console.log(colapseToggler);
             colapseToggler.addEventListener("click", function(){
                 console.log('click colapse');
