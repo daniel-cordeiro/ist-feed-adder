@@ -16,6 +16,18 @@ function addToStorage(curricular_unit) {
     });
 }
 
+function removeFromStorage (curricular_unit) {
+    const i = CURRICULAR_UNITS.findIndex(cu => cu.name === curricular_unit.name);
+    if (i > -1) {
+        CURRICULAR_UNITS.splice(i,1);
+        browser.storage.local.set({curricular_units:CURRICULAR_UNITS}, function() {
+            console.log(curricular_unit.name + ' removed from storage');
+        });
+    } else{
+        alert("Ocorreu um erro ao remover a disciplina.");
+    }
+}
+
 const FEED_CONTENT_ELEMENT = document.getElementById('main-content-wrapper');
 
 //inject input fields
@@ -52,10 +64,6 @@ function submitNewFeed(event) {
         document.getElementById('btnShowAddFeedPanel').click();
         //update storage - add new curricular unit
         addToStorage({name: curricular_unit_name, rss: rss_url});
-        
-        // browser.storage.local.get({curricular_units: []}, function (data) {
-        //     updateStorage(data.curricular_units,{name: curricular_unit_name, rss: rss_url});
-        // });
     })
     .catch((err) =>{
         alert("O feed RSS que especificou não existe ou é inválido.");
@@ -126,7 +134,8 @@ function addCurricularUnit(name, rssUrl) {
             const ts = Date.now();
 
             const newFeed = `
-                <div class="panel panel-default" style="border-width: thick;">
+                <div class="panel panel-default panel-feed-adder">
+                <a id="rmCurrUnit-${ts}" class="rmCurrUnit" title="Remover disciplina" href="#" style="">❌</a>
                     <div class="panel-body clearfix">
                         <h3 class="panel-title pull-left" style="font-size:18px">
                             <strong><a id="colapseToggler-${ts}" data-toggle="collapse" href="#collapseAnnouncements-${ts}">+ </a>
@@ -188,6 +197,12 @@ function addCurricularUnit(name, rssUrl) {
             let colapseToggler = document.getElementById(`colapseToggler-${ts}`);
             colapseToggler.addEventListener("click", function(){
                 colapseToggler.innerHTML = (colapseToggler.innerHTML == '+ ') ? '- ' : '+ ' ;
+            });
+
+            let rmCurrUnitBtn = document.getElementById(`rmCurrUnit-${ts}`);
+            rmCurrUnitBtn.addEventListener("click", function() {
+                removeFromStorage({name: CU_NAME, rss: CU_RSS});
+                location.reload();
             });
         });
 }

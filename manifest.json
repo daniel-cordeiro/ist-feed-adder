@@ -21,7 +21,8 @@
     "content_scripts": [
       {
         "matches": ["https://fenix.tecnico.ulisboa.pt/messaging/news/cms-news"],
-        "js": ["ist-feed-adder.js"]
+        "js": ["ist-feed-adder.js"],
+        "css":["ist-feed-adder.css"]
       }
     ]
   
