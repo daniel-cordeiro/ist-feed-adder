@@ -1,4 +1,6 @@
 const FEED_CONTENT_ELEMENT = document.getElementById('main-content-wrapper');
+
+//inject input fields
 const newFeedInput = `
 <button id="btnShowAddFeedPanel" type="button" style="margin-bottom:18px" class="btn btn-link" data-toggle="collapse" data-target="#newFeedInputPanel">Adicionar Feed</button>
 <div class="panel panel-default collapse" id="newFeedInputPanel">
@@ -17,9 +19,7 @@ const newFeedInput = `
     </div>
 </div>
 `;
-
 FEED_CONTENT_ELEMENT.children[0].insertAdjacentHTML("afterend", newFeedInput);
-
 
 
 function submitNewFeed(event) {
@@ -72,6 +72,7 @@ function addCurricularUnit(name, rssUrl) {
     const CU_RSS = rssUrl;
     const curricular_unit = {name: CU_NAME, url: CU_RSS.split('rss')[0], announcements: []};
 
+    //parses rss and returns a promise
     return fetch(CU_RSS)
         .then(response => response.text())
         .then(str => new DOMParser().parseFromString(str, "text/xml"))
@@ -86,8 +87,10 @@ function addCurricularUnit(name, rssUrl) {
                     {
                         title: element.getElementsByTagName('title')[0].textContent,
                         date_published: Date.parse(element.getElementsByTagName('pubDate')[0].textContent),
-                        //TODO: resolve different ways of getting this information on different feed sources
-                        last_updated: new Date(2020,3,14), //Date.parse(element.getElementsByTagName('atom:updated')[0].textContent),
+                        last_updated: 
+                            element.getElementsByTagName('atom:updated').length == 0 ? 
+                            Date.parse(element.getElementsByTagName('pubDate')[0].textContent) :
+                            Date.parse(element.getElementsByTagName('atom:updated')[0].textContent),
                         link: element.getElementsByTagName('link')[0].textContent,
                         html_content: element.getElementsByTagName('description')[0].textContent
                     }
@@ -140,10 +143,11 @@ function addCurricularUnit(name, rssUrl) {
                                                     ${curricular_unit.name} - Anúncios
                                                 </a>
                                             </em>
-                                            <br>
+                                            ${announcement.last_updated == announcement.date_published ? `` : 
+                                            `<br>
                                             <em>
                                                 Atualizado em ${formatDate(announcement.last_updated)}
-                                            </em>
+                                            </em>`}
                                         </small>
                                     </p>
                                 </div>
@@ -154,7 +158,6 @@ function addCurricularUnit(name, rssUrl) {
                 </div>
             `;
 
-            // const contentElement = document.getElementById('main-content-wrapper');
             FEED_CONTENT_ELEMENT.children[2].insertAdjacentHTML("afterend", newFeed);
 
         })
