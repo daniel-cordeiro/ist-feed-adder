@@ -1,0 +1,17 @@
+.rmCurrUnit{
+    display: none;
+    float: right;
+    margin-left: -100px;
+    margin-right: -13px;
+    margin-top: -14px;
+    font-size: medium;
+    text-decoration: none !important;
+}
+
+.panel-feed-adder{
+    border-width: thick;
+}
+
+.panel-feed-adder:hover .rmCurrUnit{
+    display: block;
+}
