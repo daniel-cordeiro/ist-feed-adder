@@ -1,3 +1,21 @@
+var CURRICULAR_UNITS;
+
+// first argument is default value - []
+browser.storage.local.get({curricular_units: []}, function (data) {
+    CURRICULAR_UNITS = data.curricular_units;
+    console.log('retrieved from storage: ' + CURRICULAR_UNITS.map(cu => cu.name));
+    CURRICULAR_UNITS.forEach(curricular_unit => {
+        addCurricularUnit(curricular_unit.name,curricular_unit.rss);
+    });
+});
+
+function addToStorage(curricular_unit) {
+    CURRICULAR_UNITS.push(curricular_unit);
+    browser.storage.local.set({curricular_units:CURRICULAR_UNITS}, function() {
+        console.log(curricular_unit.name + ' added to storage');
+    });
+}
+
 const FEED_CONTENT_ELEMENT = document.getElementById('main-content-wrapper');
 
 //inject input fields
@@ -27,15 +45,17 @@ function submitNewFeed(event) {
 
     const curricular_unit_name = document.getElementById('curricular_unit_name').value;
     const rss_url = document.getElementById('rss_url').value;
-    
-    console.log(curricular_unit_name);
-    console.log(rss_url);
-
 
     addCurricularUnit(curricular_unit_name,rss_url)
     .then(() =>{
         formNewFeed.reset();
         document.getElementById('btnShowAddFeedPanel').click();
+        //update storage - add new curricular unit
+        addToStorage({name: curricular_unit_name, rss: rss_url});
+        
+        // browser.storage.local.get({curricular_units: []}, function (data) {
+        //     updateStorage(data.curricular_units,{name: curricular_unit_name, rss: rss_url});
+        // });
     })
     .catch((err) =>{
         alert("O feed RSS que especificou não existe ou é inválido.");
@@ -66,13 +86,11 @@ function formatDate(date) {
 
 
 function addCurricularUnit(name, rssUrl) {
-    // const CDI_II_RSS = `https://cdi2tp.math.tecnico.ulisboa.pt/rss/avisos`;
-    // const CDI_NAME = 'Cálculo Diferencial e Integral II';
     const CU_NAME = name;
     const CU_RSS = rssUrl;
     const curricular_unit = {name: CU_NAME, url: CU_RSS.split('rss')[0], announcements: []};
 
-    //parses rss and returns a promise
+    //parse rss and returns a promise
     return fetch(CU_RSS)
         .then(response => response.text())
         .then(str => new DOMParser().parseFromString(str, "text/xml"))
@@ -100,6 +118,7 @@ function addCurricularUnit(name, rssUrl) {
             curricular_unit.announcements.sort((a, b) => b.last_updated - a.last_updated);
             curricular_unit.last_updated = curricular_unit.announcements[0].last_updated;
 
+            console.log('Curricular unit object constructed:');
             console.log(curricular_unit);
         })
         .then( () => {
@@ -167,9 +186,7 @@ function addCurricularUnit(name, rssUrl) {
         .then( ts =>{
             //register document events
             let colapseToggler = document.getElementById(`colapseToggler-${ts}`);
-            console.log(colapseToggler);
             colapseToggler.addEventListener("click", function(){
-                console.log('click colapse');
                 colapseToggler.innerHTML = (colapseToggler.innerHTML == '+ ') ? '- ' : '+ ' ;
             });
         });

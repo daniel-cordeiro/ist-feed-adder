@@ -14,7 +14,8 @@
     "permissions": [
       "*://cdi2tp.math.tecnico.ulisboa.pt/*",
       "*://fenix.ciencias.ulisboa.pt/*",
-      "webRequest"
+      "webRequest",
+      "storage"
     ],
   
     "content_scripts": [
